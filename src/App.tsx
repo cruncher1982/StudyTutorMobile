@@ -10,13 +10,15 @@ import {
   BookMarked,
   Sparkles,
   Trophy,
-  Activity
+  Activity,
+  FileCode
 } from "lucide-react";
 import AndroidFrame from "./components/AndroidFrame";
 import DashboardView from "./components/DashboardView";
 import FlashcardsView from "./components/FlashcardsView";
 import QuizzerView from "./components/QuizzerView";
 import ChatView from "./components/ChatView";
+import KotlinSourceView from "./components/KotlinSourceView";
 import { StudyTopic, StudyGoal, ChatMessage } from "./types";
 
 // High-fidelity pre-curated modules to ensure immediate offline study functionality
@@ -155,6 +157,7 @@ export default function App() {
   // Navigation Logic States
   const [activeTopic, setActiveTopic] = useState<StudyTopic | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "flashcards" | "quiz" | "chat">("overview");
+  const [viewMode, setViewMode] = useState<"app" | "kotlin">("app");
 
   // Loading States
   const [isGenerating, setIsGenerating] = useState(false);
@@ -316,203 +319,211 @@ export default function App() {
     <AndroidFrame>
       <div className="flex flex-col h-full bg-[#FAFBFD] relative">
         
-        {/* App Title Frame Header */}
-        {!activeTopic && (
-          <div className="bg-white border-b border-[#D9E3F3]/50 px-4 py-3 flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
-                <GraduationCap className="w-5 h-5 stroke-[2.5]" />
+        {viewMode === "kotlin" ? (
+          <KotlinSourceView onBack={() => setViewMode("app")} />
+        ) : (
+          <>
+            {/* App Title Frame Header */}
+            {!activeTopic && (
+              <div className="bg-white border-b border-[#D9E3F3]/50 px-4 py-3 flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                    <GraduationCap className="w-5 h-5 stroke-[2.5]" />
+                  </div>
+                  <span className="font-display font-bold text-sm tracking-tight text-[#121C28]">
+                    Study Tutor Companion
+                  </span>
+                </div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" title="Study Engine Online" />
               </div>
-              <span className="font-display font-bold text-sm tracking-tight text-[#121C28]">
-                Study Tutor Companion
-              </span>
+            )}
+
+            {/* Dynamic Route views router */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {activeTopic ? (
+                activeTab === "flashcards" ? (
+                  <FlashcardsView
+                    topicTitle={activeTopic.title}
+                    flashcards={activeTopic.flashcards || []}
+                    onBack={() => setActiveTab("overview")}
+                  />
+                ) : activeTab === "quiz" ? (
+                  <QuizzerView
+                    topicTitle={activeTopic.title}
+                    questions={activeTopic.quizQuestions || []}
+                    onBack={() => setActiveTab("overview")}
+                  />
+                ) : activeTab === "chat" ? (
+                  <ChatView
+                    topicTitle={activeTopic.title}
+                    chatHistory={chatHistories[activeTopic.id] || []}
+                    onSendMessage={handleSendChatMessage}
+                    isGenerating={chatGenerating}
+                    onBack={() => setActiveTab("overview")}
+                  />
+                ) : (
+                  /* High Fidelity Single Topic Overview Hub */
+                  <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
+                    
+                    {/* Back Link */}
+                    <button
+                      onClick={() => setActiveTopic(null)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D9E3F3] text-xs font-semibold text-[#6D7A8A] rounded-xl hover:bg-[#F0F4FA] transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Return to Subjects</span>
+                    </button>
+
+                    {/* Primary Subject card summary */}
+                    <div className="bg-white border border-[#D9E3F3]/80 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl inline-block mb-3.5">
+                        <BookMarked className="w-5.5 h-5.5" />
+                      </div>
+                      <h2 className="font-display font-bold text-base text-[#121C28] tracking-tight">
+                        {activeTopic.title}
+                      </h2>
+                      <p className="text-xs text-[#6D7A8A] leading-relaxed mt-2">
+                        {activeTopic.overview || "This AI module includes persistent flashcards, study summaries, and interactive revision testing."}
+                      </p>
+                    </div>
+
+                    {/* Menu list representing class options/views (Flashcards, Quiz, Chat) */}
+                    <div className="space-y-3">
+                      <h3 className="font-display font-bold text-xs tracking-wider uppercase text-blue-600 flex items-center gap-1.5 ml-1">
+                        <Activity className="w-4 h-4 text-blue-500" />
+                        <span>Selected Curriculum Tasks</span>
+                      </h3>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        
+                        {/* Recall Flashcards Task item */}
+                        <button
+                          onClick={() => setActiveTab("flashcards")}
+                          className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
+                        >
+                          <div className="flex items-center gap-3.5 pr-2">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                              <BookOpen className="w-5.5 h-5.5" />
+                            </div>
+                            <div>
+                              <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
+                                Active Recall Index Cards
+                              </h4>
+                              <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
+                                Flip and practice concepts • {(activeTopic.flashcards || []).length} Flashcards
+                              </p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-xl text-[10px] font-bold uppercase select-none">
+                            Practice
+                          </div>
+                        </button>
+
+                        {/* Dynamic Mini Quiz Task item */}
+                        <button
+                          onClick={() => setActiveTab("quiz")}
+                          className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
+                        >
+                          <div className="flex items-center gap-3.5 pr-2">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                              <BrainCircuit className="w-5.5 h-5.5" />
+                            </div>
+                            <div>
+                              <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
+                                Knowledge Review Test
+                              </h4>
+                              <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
+                                Interactively score yourself • {(activeTopic.quizQuestions || []).length} interactive questions
+                              </p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-bold uppercase select-none">
+                            Test MCQ
+                          </div>
+                        </button>
+
+                        {/* Chat with Tutor Task item */}
+                        <button
+                          onClick={() => setActiveTab("chat")}
+                          className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
+                        >
+                          <div className="flex items-center gap-3.5 pr-2">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                              <MessageSquare className="w-5.5 h-5.5" />
+                            </div>
+                            <div>
+                              <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
+                                AI Explanation Coach
+                              </h4>
+                              <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
+                                Ask math, code, or context explanations directly to Gemini
+                              </p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-bold uppercase select-none">
+                            Chat
+                          </div>
+                        </button>
+
+                      </div>
+                    </div>
+
+                    {/* Progress Card */}
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-4 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold tracking-wider uppercase opacity-80">STUDY COMPLETION ADVICE</span>
+                        <h4 className="font-display font-bold text-xs">Test Ready Scorecard</h4>
+                        <p className="text-[10px] opacity-90 max-w-[220px]">
+                          Complete all listed recall cards and scored quizzes to lock in total study retention.
+                        </p>
+                      </div>
+                      <Trophy className="w-10 h-10 text-amber-300 stroke-[1.5] fill-amber-300/10 drop-shadow shrink-0 ml-2" />
+                    </div>
+
+                  </div>
+                )
+              ) : (
+                /* Home / Dashboard list representation */
+                <DashboardView
+                  topics={topics}
+                  goals={goals}
+                  streak={streak}
+                  onSelectTopic={(t) => {
+                    setActiveTopic(t);
+                    setActiveTab("overview");
+                  }}
+                  onAddTopic={handleAddTopic}
+                  onDeleteTopic={handleDeleteTopic}
+                  onAddGoal={handleAddGoal}
+                  onToggleGoal={handleToggleGoal}
+                  onDeleteGoal={handleDeleteGoal}
+                  isGenerating={isGenerating}
+                />
+              )}
             </div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" title="Study Engine Online" />
-          </div>
+          </>
         )}
 
-        {/* Dynamic Route views router */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {activeTopic ? (
-            activeTab === "flashcards" ? (
-              <FlashcardsView
-                topicTitle={activeTopic.title}
-                flashcards={activeTopic.flashcards || []}
-                onBack={() => setActiveTab("overview")}
-              />
-            ) : activeTab === "quiz" ? (
-              <QuizzerView
-                topicTitle={activeTopic.title}
-                questions={activeTopic.quizQuestions || []}
-                onBack={() => setActiveTab("overview")}
-              />
-            ) : activeTab === "chat" ? (
-              <ChatView
-                topicTitle={activeTopic.title}
-                chatHistory={chatHistories[activeTopic.id] || []}
-                onSendMessage={handleSendChatMessage}
-                isGenerating={chatGenerating}
-                onBack={() => setActiveTab("overview")}
-              />
-            ) : (
-              /* High Fidelity Single Topic Overview Hub */
-              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
-                
-                {/* Back Link */}
-                <button
-                  onClick={() => setActiveTopic(null)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D9E3F3] text-xs font-semibold text-[#6D7A8A] rounded-xl hover:bg-[#F0F4FA] transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Return to Subjects</span>
-                </button>
-
-                {/* Primary Subject card summary */}
-                <div className="bg-white border border-[#D9E3F3]/80 rounded-2xl p-5 shadow-xs relative overflow-hidden">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl inline-block mb-3.5">
-                    <BookMarked className="w-5.5 h-5.5" />
-                  </div>
-                  <h2 className="font-display font-bold text-base text-[#121C28] tracking-tight">
-                    {activeTopic.title}
-                  </h2>
-                  <p className="text-xs text-[#6D7A8A] leading-relaxed mt-2">
-                    {activeTopic.overview || "This AI module includes persistent flashcards, study summaries, and interactive revision testing."}
-                  </p>
-                </div>
-
-                {/* Menu list representing class options/views (Flashcards, Quiz, Chat) */}
-                <div className="space-y-3">
-                  <h3 className="font-display font-bold text-xs tracking-wider uppercase text-blue-600 flex items-center gap-1.5 ml-1">
-                    <Activity className="w-4 h-4 text-blue-500" />
-                    <span>Selected Curriculum Tasks</span>
-                  </h3>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    
-                    {/* Recall Flashcards Task item */}
-                    <button
-                      onClick={() => setActiveTab("flashcards")}
-                      className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
-                    >
-                      <div className="flex items-center gap-3.5 pr-2">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
-                          <BookOpen className="w-5.5 h-5.5" />
-                        </div>
-                        <div>
-                          <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
-                            Active Recall Index Cards
-                          </h4>
-                          <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
-                            Flip and practice concepts • {(activeTopic.flashcards || []).length} Flashcards
-                          </p>
-                        </div>
-                      </div>
-                      <div className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-xl text-[10px] font-bold uppercase select-none">
-                        Practice
-                      </div>
-                    </button>
-
-                    {/* Dynamic Mini Quiz Task item */}
-                    <button
-                      onClick={() => setActiveTab("quiz")}
-                      className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
-                    >
-                      <div className="flex items-center gap-3.5 pr-2">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                          <BrainCircuit className="w-5.5 h-5.5" />
-                        </div>
-                        <div>
-                          <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
-                            Knowledge Review Test
-                          </h4>
-                          <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
-                            Interactively score yourself • {(activeTopic.quizQuestions || []).length} interactive questions
-                          </p>
-                        </div>
-                      </div>
-                      <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-bold uppercase select-none">
-                        Test MCQ
-                      </div>
-                    </button>
-
-                    {/* Chat with Tutor Task item */}
-                    <button
-                      onClick={() => setActiveTab("chat")}
-                      className="w-full text-left bg-white border border-[#D9E3F3]/80 hover:border-blue-500 rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer shadow-xs group"
-                    >
-                      <div className="flex items-center gap-3.5 pr-2">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
-                          <MessageSquare className="w-5.5 h-5.5" />
-                        </div>
-                        <div>
-                          <h4 className="font-display font-bold text-xs text-[#121C28] group-hover:text-blue-600 transition-colors">
-                            AI Explanation Coach
-                          </h4>
-                          <p className="text-[10px] text-[#A6B2C3] mt-0.5 font-semibold">
-                            Ask math, code, or context explanations directly to Gemini
-                          </p>
-                        </div>
-                      </div>
-                      <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-bold uppercase select-none">
-                        Chat
-                      </div>
-                    </button>
-
-                  </div>
-                </div>
-
-                {/* Progress Card */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold tracking-wider uppercase opacity-80">STUDY COMPLETION ADVICE</span>
-                    <h4 className="font-display font-bold text-xs">Test Ready Scorecard</h4>
-                    <p className="text-[10px] opacity-90 max-w-[220px]">
-                      Complete all listed recall cards and scored quizzes to lock in total study retention.
-                    </p>
-                  </div>
-                  <Trophy className="w-10 h-10 text-amber-300 stroke-[1.5] fill-amber-300/10 drop-shadow shrink-0 ml-2" />
-                </div>
-
-              </div>
-            )
-          ) : (
-            /* Home / Dashboard list representation */
-            <DashboardView
-              topics={topics}
-              goals={goals}
-              streak={streak}
-              onSelectTopic={(t) => {
-                setActiveTopic(t);
-                setActiveTab("overview");
-              }}
-              onAddTopic={handleAddTopic}
-              onDeleteTopic={handleDeleteTopic}
-              onAddGoal={handleAddGoal}
-              onToggleGoal={handleToggleGoal}
-              onDeleteGoal={handleDeleteGoal}
-              isGenerating={isGenerating}
-            />
-          )}
-        </div>
-
         {/* Global sticky Bottom Navigation Area for mobile design standard */}
-        <div className="bg-white border-t border-[#D9E3F3]/50 px-4 py-2 flex justify-around items-center shrink-0 z-10 select-none">
+        <div className="bg-white border-t border-[#D9E3F3]/50 px-3 py-2 flex justify-around items-center shrink-0 z-10 select-none gap-1">
           <button
             onClick={() => {
+              setViewMode("app");
               setActiveTopic(null);
             }}
-            className={`flex flex-col items-center gap-1.5 py-1 px-4.5 rounded-xl transition-all cursor-pointer ${
-              activeTopic === null 
+            className={`flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl transition-all cursor-pointer ${
+              viewMode === "app" && activeTopic === null 
                 ? "bg-blue-50 text-blue-600 font-bold" 
                 : "text-[#6D7A8A] hover:bg-neutral-50"
             }`}
           >
-            <Layout className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-wider">Dashboard</span>
+            <Layout className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-bold uppercase tracking-wider">Dashboard</span>
           </button>
 
           <button
             onClick={() => {
+              setViewMode("app");
               if (topics.length > 0) {
                 setActiveTopic(topics[0]);
                 setActiveTab("overview");
@@ -520,14 +531,28 @@ export default function App() {
                 alert("Please add or select a study topic first!");
               }
             }}
-            className={`flex flex-col items-center gap-1.5 py-1 px-4.5 rounded-xl transition-all cursor-pointer ${
-              activeTopic !== null 
+            className={`flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl transition-all cursor-pointer ${
+              viewMode === "app" && activeTopic !== null 
                 ? "bg-blue-50 text-blue-600 font-bold" 
                 : "text-[#6D7A8A] hover:bg-neutral-50"
             }`}
           >
-            <BookMarked className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-wider">Plan Hub</span>
+            <BookMarked className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-bold uppercase tracking-wider">Plan Hub</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setViewMode("kotlin");
+            }}
+            className={`flex flex-col items-center gap-1 py-1.5 px-3.5 rounded-xl transition-all cursor-pointer ${
+              viewMode === "kotlin" 
+                ? "bg-blue-50 text-blue-600 font-bold" 
+                : "text-[#6D7A8A] hover:bg-neutral-50"
+            }`}
+          >
+            <FileCode className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-bold uppercase tracking-wider">Kotlin Code</span>
           </button>
         </div>
 
