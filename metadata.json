@@ -1,0 +1,6 @@
+{
+  "name": "Study Tutor",
+  "description": "An interactive study companion designed as a responsive mobile-first tutoring application. Features AI-powered summaries, flashcards, interactive quizzes, and custom study plans powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
